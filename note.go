@@ -13,10 +13,10 @@ type Note struct {
 }
 
 var textInBodyREs = []*regexp.Regexp{
-	regexp.MustCompile("(?m)^```release-note\n(?P<note>.+)\n```"),
-	regexp.MustCompile("(?m)^```releasenote\n(?P<note>.+)\n```"),
-	regexp.MustCompile("(?m)^```release-note:(?P<type>[^\n]*)\n(?P<note>.+)\n```"),
-	regexp.MustCompile("(?m)^```releasenote:(?P<type>[^\n]*)\n(?P<note>.+)\n```"),
+	regexp.MustCompile("(?ms)^```release-note\n(?P<note>.+)\n```"),
+	regexp.MustCompile("(?ms)^```releasenote\n(?P<note>.+)\n```"),
+	regexp.MustCompile("(?ms)^```release-note:(?P<type>[^\n]*)\n?(?P<note>.*)\n?```"),
+	regexp.MustCompile("(?ms)^```releasenote:(?P<type>[^\n]*)\n?(?P<note>.*)\n?```"),
 }
 
 func NotesFromEntry(entry Entry) []Note {
@@ -45,7 +45,7 @@ func NotesFromEntry(entry Entry) []Note {
 			note = strings.TrimSpace(note)
 			typ = strings.TrimSpace(typ)
 
-			if note == "" {
+			if note == "" && typ == "" {
 				continue
 			}
 
