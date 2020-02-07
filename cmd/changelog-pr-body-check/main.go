@@ -1,0 +1,114 @@
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+	"strconv"
+
+	"github.com/google/go-github/github"
+	"github.com/hashicorp/go-changelog"
+	"golang.org/x/oauth2"
+)
+
+func main() {
+	ctx := context.Background()
+	pr := os.Args[1]
+	prNo, err := strconv.Atoi(pr)
+	if err != nil {
+		log.Fatalf("Error parsing PR %q as a number: %w", pr, err)
+	}
+
+	owner := os.Getenv("GITHUB_OWNER")
+	repo := os.Getenv("GITHUB_REPO")
+	token := os.Getenv("GITHUB_TOKEN")
+
+	if owner == "" {
+		log.Fatalf("GITHUB_OWNER not set")
+	}
+	if repo == "" {
+		log.Fatalf("GITHUB_REPO not set")
+	}
+	if token == "" {
+		log.Fatalf("GITHUB_TOKEN not set")
+	}
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	client := github.NewClient(tc)
+
+	pullRequest, _, err := client.PullRequests.Get(ctx, owner, repo, prNo)
+	if err != nil {
+		log.Fatalf("Error retrieving pull request github.com/"+
+			"%s/%s/%d: %w", owner, repo, prNo, err)
+	}
+	entry := changelog.Entry{
+		Issue: pr,
+		Body:  pullRequest.GetBody(),
+	}
+	notes := changelog.NotesFromEntry(entry)
+	if len(notes) < 1 {
+		log.Printf("no changelog entry found in %s: %s", entry.Issue,
+			string(entry.Body))
+		body := "Oops! It looks like no changelog entry is attached to" +
+			" this PR. Please include a release note block" +
+			" in the PR body, as described in https://github.com/GoogleCloudPlatform/magic-modules/blob/master/.ci/RELEASE_NOTES_GUIDE.md:" +
+			"\n\n~~~\n```release-note:TYPE\nRelease note" +
+			"\n```\n~~~"
+		_, _, err = client.Issues.CreateComment(ctx, owner, repo,
+			prNo, &github.IssueComment{
+				Body: &body,
+			})
+		if err != nil {
+			log.Fatalf("Error creating pull request comment on"+
+				" github.com/%s/%s/%d: %w", owner, repo, prNo,
+				err)
+		}
+		os.Exit(1)
+	}
+	var unknownTypes []string
+	for _, note := range notes {
+		switch note.Type {
+		case "none",
+			"bug",
+			"note",
+			"enhancement",
+			"new-resource",
+			"new-datasource",
+			"deprecation",
+			"breaking-change",
+			"feature":
+		default:
+			unknownTypes = append(unknownTypes, note.Type)
+		}
+	}
+	if len(unknownTypes) > 0 {
+		log.Printf("unknown changelog types %v", unknownTypes)
+		body := "Oops! It looks like you're using"
+		if len(unknownTypes) == 1 {
+			body += " an"
+		}
+		body += " unknown release-note type"
+		if len(unknownTypes) > 1 {
+			body += "s"
+		}
+		body += " in your changelog entries:"
+		for _, t := range unknownTypes {
+			body += "\n* " + t
+		}
+		body += "\n\nPlease only use the types listed in https://github.com/GoogleCloudPlatform/magic-modules/blob/master/.ci/RELEASE_NOTES_GUIDE.md."
+		_, _, err = client.Issues.CreateComment(ctx, owner, repo,
+			prNo, &github.IssueComment{
+				Body: &body,
+			})
+		if err != nil {
+			log.Fatalf("Error creating pull request comment on"+
+				" github.com/%s/%s/%d: %w", owner, repo, prNo,
+				err)
+		}
+		os.Exit(1)
+	}
+}
