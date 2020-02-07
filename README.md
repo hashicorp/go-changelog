@@ -18,6 +18,41 @@ reference--and compiles a list of the files present in the later commit that
 aren't present in the earlier commit. These are assumed to accurately reflect
 the changes that have been added between the two commits.
 
+## Installation
+
+### Binaries
+
+To run the command line binaries, use Go to build the commands. For example:
+
+```sh
+$ go get github.com/hashicorp/go-changelog/cmd/changelog-pr-body-check
+```
+
+### Docker
+
+A Dockerfile is provided that will build an image containing the binaries. You
+can either run this container directly, or you can build an image sourced from
+it that specifies the environment variables and entrypoint. In the future, when
+go-changelog has config files, this will be how you can add your config files.
+
+```Dockerfile
+FROM hashicorp/go-changelog
+
+ENV GITHUB_REPO=myrepo
+ENV GITHUB_OWNER=myorg
+
+# Maybe leave this one out and specify it with -e
+ENV GITHUB_TOKEN=foo123abc
+
+ENTRYPOINT ["/go-changelog/changelog-pr-body-check"]
+```
+
+## Usage
+
+For using the `go-changelog` library, please see [go.dev](https://pkg.go.dev/github.com/hashicorp/go-changelog).
+For using the specific binaries, please see the README files in their
+directories.
+
 ## Change File Formatting
 
 The files in your directory describe the changes that will be used to generate
