@@ -13,6 +13,9 @@ import (
 
 func main() {
 	ctx := context.Background()
+	if len(os.Args) < 2 {
+		log.Fatalf("Usage: changelog-pr-body-check PR#\n")
+	}
 	pr := os.Args[1]
 	prNo, err := strconv.Atoi(pr)
 	if err != nil {
