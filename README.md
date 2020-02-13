@@ -36,7 +36,7 @@ it that specifies the environment variables and entrypoint. In the future, when
 go-changelog has config files, this will be how you can add your config files.
 
 ```Dockerfile
-FROM hashicorp/go-changelog
+FROM hashicorpdev/go-changelog
 
 ENV GITHUB_REPO=myrepo
 ENV GITHUB_OWNER=myorg
