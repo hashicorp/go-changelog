@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/hashicorp/go-changelog"
@@ -103,8 +104,11 @@ func main() {
 		os.Exit(1)
 	}
 	var notes []changelog.Note
-	var notesByType map[string][]changelog.Note
+	notesByType := map[string][]changelog.Note{}
 	for _, entry := range entries {
+		if strings.HasSuffix(entry.Issue, ".txt") {
+			entry.Issue = strings.TrimSuffix(entry.Issue, ".txt")
+		}
 		notes = append(notes, changelog.NotesFromEntry(entry)...)
 	}
 	for _, note := range notes {
