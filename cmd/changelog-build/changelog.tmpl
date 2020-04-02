@@ -2,21 +2,21 @@
 NOTES:
 {{range .NotesByType.note -}}
 * {{ template "note" .}}
-{{- end -}}
+{{ end -}}
 {{- end -}}
 
 {{- if .NotesByType.deprecation -}}
 DEPRECATIONS:
 {{range .NotesByType.deprecation -}}
 * {{ template "note" .}}
-{{- end -}}
+{{ end -}}
 {{- end -}}
 
 {{- if index .NotesByType "breaking-change" -}}
 BREAKING CHANGES:
 {{range index .NotesByType "breaking-change" -}}
 * {{ template "note" .}}
-{{- end -}}
+{{ end -}}
 {{- end -}}
 
 {{- $features := combineTypes .NotesByType.feature (index .NotesByType "new-resource" ) (index .NotesByType "new-datasource") (index .NotesByType "new-data-source") -}}
@@ -24,7 +24,7 @@ BREAKING CHANGES:
 FEATURES:
 {{range $features | sort -}}
 * {{ template "note" . }}
-{{- end -}}
+{{ end -}}
 {{- end -}}
 
 {{- $improvements := combineTypes .NotesByType.improvement .NotesByType.enhancement -}}
@@ -32,12 +32,12 @@ FEATURES:
 IMPROVEMENTS:
 {{range $improvements | sort -}}
 * {{ template "note" . }}
-{{- end -}}
+{{ end -}}
 {{- end -}}
 
 {{- if .NotesByType.bug }}
 BUG FIXES:
 {{range .NotesByType.bug -}}
 * {{ template "note" . }}
-{{- end -}}
+{{ end -}}
 {{- end -}}
