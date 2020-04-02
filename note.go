@@ -13,10 +13,10 @@ type Note struct {
 }
 
 var textInBodyREs = []*regexp.Regexp{
-	regexp.MustCompile("(?ms)^```release-note\n(?P<note>.+)\n```"),
-	regexp.MustCompile("(?ms)^```releasenote\n(?P<note>.+)\n```"),
-	regexp.MustCompile("(?ms)^```release-note:(?P<type>[^\n]*)\n?(?P<note>.*)\n?```"),
-	regexp.MustCompile("(?ms)^```releasenote:(?P<type>[^\n]*)\n?(?P<note>.*)\n?```"),
+	regexp.MustCompile("(?ms)^```release-note\r?\n(?P<note>.+?)\r?\n```"),
+	regexp.MustCompile("(?ms)^```releasenote\r?\n(?P<note>.+?)\r?\n```"),
+	regexp.MustCompile("(?ms)^```release-note:(?P<type>[^\r\n]*)\r?\n?(?P<note>.*?)\r?\n?```"),
+	regexp.MustCompile("(?ms)^```releasenote:(?P<type>[^\r\n]*)\r?\n?(?P<note>.*?)\r?\n?```"),
 }
 
 func NotesFromEntry(entry Entry) []Note {
@@ -66,13 +66,13 @@ func SortNotes(res []Note) func(i, j int) bool {
 			return true
 		} else if res[j].Type < res[i].Type {
 			return false
-		} else if res[i].Issue < res[j].Issue {
-			return true
-		} else if res[j].Issue < res[i].Issue {
-			return false
 		} else if res[i].Body < res[j].Body {
 			return true
 		} else if res[j].Body < res[i].Body {
+			return false
+		} else if res[i].Issue < res[j].Issue {
+			return true
+		} else if res[j].Issue < res[i].Issue {
 			return false
 		}
 		return false
