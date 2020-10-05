@@ -85,6 +85,9 @@ func main() {
 			}
 			return res
 		},
+		"stringHasPrefix": func(s, prefix string) bool {
+			return strings.HasPrefix(s, prefix)
+		},
 	})
 	tmpl, err = tmpl.ParseFiles(noteTmpl)
 	if err != nil {
