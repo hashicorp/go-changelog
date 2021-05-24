@@ -19,7 +19,7 @@ func main() {
 	pr := os.Args[1]
 	prNo, err := strconv.Atoi(pr)
 	if err != nil {
-		log.Fatalf("Error parsing PR %q as a number: %w", pr, err)
+		log.Fatalf("Error parsing PR %q as a number: %s", pr, err)
 	}
 
 	owner := os.Getenv("GITHUB_OWNER")
@@ -46,7 +46,7 @@ func main() {
 	pullRequest, _, err := client.PullRequests.Get(ctx, owner, repo, prNo)
 	if err != nil {
 		log.Fatalf("Error retrieving pull request github.com/"+
-			"%s/%s/%d: %w", owner, repo, prNo, err)
+			"%s/%s/%d: %s", owner, repo, prNo, err)
 	}
 	entry := changelog.Entry{
 		Issue: pr,
@@ -67,7 +67,7 @@ func main() {
 			})
 		if err != nil {
 			log.Fatalf("Error creating pull request comment on"+
-				" github.com/%s/%s/%d: %w", owner, repo, prNo,
+				" github.com/%s/%s/%d: %s", owner, repo, prNo,
 				err)
 		}
 		os.Exit(1)
@@ -109,7 +109,7 @@ func main() {
 			})
 		if err != nil {
 			log.Fatalf("Error creating pull request comment on"+
-				" github.com/%s/%s/%d: %w", owner, repo, prNo,
+				" github.com/%s/%s/%d: %s", owner, repo, prNo,
 				err)
 		}
 		os.Exit(1)
