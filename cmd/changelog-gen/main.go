@@ -50,7 +50,7 @@ func main() {
 	flag.StringVar(&service, "service", "", "the service the pr change (not mandatory)")
 	flag.StringVar(&Type, "type", "", "The pr type")
 	flag.StringVar(&Description, "description", "", "the changelog-gen description entry")
-	flag.StringVar(&changelogTmpl, "changelog-gen-template", "", "the path of the file holding the template to use for the entire changelog-gen")
+	flag.StringVar(&changelogTmpl, "changelog-template", "", "the path of the file holding the template to use for the entire changelog-gen")
 	flag.Parse()
 
 	if pr == -1 {
@@ -169,7 +169,7 @@ func getPrNumberFromGithub(path string) (int, string, error) {
 		if *pr.Head.Ref == branchName {
 			n := pr.GetNumber()
 			if n != 0 {
-				return n, pr.GetIssueURL(), nil
+				return n, pr.GetHTMLURL(), nil
 			}
 		}
 	}
