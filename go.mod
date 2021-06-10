@@ -1,6 +1,6 @@
 module github.com/hashicorp/go-changelog
 
-go 1.13
+go 1.16
 
 require (
 	github.com/go-git/go-billy/v5 v5.0.0
