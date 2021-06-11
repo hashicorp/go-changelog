@@ -46,7 +46,7 @@ func main() {
 	var service, Type, Description, changelogTmpl, url string
 	var pr int
 	var noUrl bool
-	flag.BoolVar(&noUrl, "no-url", false, "do not add github issue url")
+	flag.BoolVar(&noUrl, "no-url", true, "do not add github issue url")
 	flag.IntVar(&pr, "pr", -1, "pr number")
 	flag.StringVar(&service, "service", "", "the service the pr change (not mandatory)")
 	flag.StringVar(&Type, "type", "", "The pr type")
