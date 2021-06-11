@@ -63,24 +63,32 @@ func main() {
 			os.Exit(1)
 		}
 	}
-
+	typeValues := []string{"enhancement",
+		"feature",
+		"bug",
+		"note",
+		"new-resource",
+		"new-datasource",
+		"deprecation",
+		"breaking-change",
+	}
 	if Type == "" {
 		prompt := promptui.Select{
 			Label: "Select a change type",
-			Items: []string{"enhancement",
-				"bug",
-				"note",
-				"new-resource",
-				"new-datasource",
-				"deprecation",
-				"breaking-change",
-				"none"},
+			Items: typeValues,
 		}
 
 		_, Type, err = prompt.Run()
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Must specify the change type")
+			fmt.Fprintln(os.Stderr, "")
+			flag.Usage()
+			os.Exit(1)
+		}
+	} else {
+		if !TypeValid(typeValues, Type) {
+			fmt.Fprintln(os.Stderr, "Must specify a valid type")
 			fmt.Fprintln(os.Stderr, "")
 			flag.Usage()
 			os.Exit(1)
@@ -129,6 +137,15 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+func TypeValid(elements []string, Type string) bool {
+	for _, a := range elements {
+		if a == Type {
+			return true
+		}
+	}
+	return false
 }
 
 func OpenGit(path string) (*git.Repository, error) {
