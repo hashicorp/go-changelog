@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/github"
+	"github.com/hashicorp/go-changelog"
 	"github.com/manifoldco/promptui"
 	"os"
 	"regexp"
@@ -29,12 +30,6 @@ type Note struct {
 	//pr number
 	Pr  int
 	URL string
-}
-
-type GithubCred struct {
-	owner string
-	repo  string
-	token string
 }
 
 func main() {
@@ -63,19 +58,11 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	typeValues := []string{"enhancement",
-		"feature",
-		"bug",
-		"note",
-		"new-resource",
-		"new-datasource",
-		"deprecation",
-		"breaking-change",
-	}
+
 	if Type == "" {
 		prompt := promptui.Select{
 			Label: "Select a change type",
-			Items: typeValues,
+			Items: changelog.TypeValues,
 		}
 
 		_, Type, err = prompt.Run()
@@ -87,7 +74,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		if !TypeValid(typeValues, Type) {
+		if !changelog.TypeValid(Type) {
 			fmt.Fprintln(os.Stderr, "Must specify a valid type")
 			fmt.Fprintln(os.Stderr, "")
 			flag.Usage()
@@ -139,15 +126,6 @@ func main() {
 	}
 }
 
-func TypeValid(elements []string, Type string) bool {
-	for _, a := range elements {
-		if a == Type {
-			return true
-		}
-	}
-	return false
-}
-
 func OpenGit(path string) (*git.Repository, error) {
 	r, err := git.PlainOpen(path)
 	if err != nil {
@@ -190,7 +168,7 @@ func getPrNumberFromGithub(path string) (int, string, error) {
 	}
 	repoUrl := rem.Config().URLs[0]
 
-	reg := regexp.MustCompile(".*github\\.com:(.*)/(.*)\\.git")
+	reg := regexp.MustCompile(`.*github\\.com:(.*)/(.*)\\.git`)
 	m := reg.FindAllStringSubmatch(repoUrl, -1)
 	if len(m) > 1 {
 		if len(m[0]) < 2 {

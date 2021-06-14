@@ -11,6 +11,16 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
+var TypeValues = []string{"enhancement",
+	"feature",
+	"bug",
+	"note",
+	"new-resource",
+	"new-datasource",
+	"deprecation",
+	"breaking-change",
+}
+
 type Entry struct {
 	Issue string
 	Body  string
@@ -42,6 +52,9 @@ func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
 		Hash:  *rev2,
 		Force: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 	entriesAfterFI, err := wt.Filesystem.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -64,6 +77,9 @@ func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
 			Hash:  *rev1,
 			Force: true,
 		})
+		if err != nil {
+			return nil, err
+		}
 		entriesBeforeFI, err := wt.Filesystem.ReadDir(dir)
 		if err != nil {
 			return nil, err
@@ -83,4 +99,13 @@ func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
 		return entries[i].Issue < entries[j].Issue
 	})
 	return entries, nil
+}
+
+func TypeValid(Type string) bool {
+	for _, a := range TypeValues {
+		if a == Type {
+			return true
+		}
+	}
+	return false
 }
