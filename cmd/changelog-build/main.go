@@ -74,6 +74,12 @@ func main() {
 			sort.Slice(in, changelog.SortNotes(in))
 			return in
 		},
+		"sortByDate": func(in []changelog.Note) []changelog.Note {
+			sort.Slice(in, func(i, j int) bool {
+				return in[i].Date.Before(in[j].Date)
+			})
+			return in
+		},
 		"combineTypes": func(in ...[]changelog.Note) []changelog.Note {
 			count := 0
 			for _, i := range in {

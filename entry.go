@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
@@ -14,6 +15,14 @@ import (
 type Entry struct {
 	Issue string
 	Body  string
+	Date  time.Time
+	Hash  string
+}
+
+type changelog struct {
+	content []byte
+	hash    string
+	date    time.Time
 }
 
 func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
@@ -46,9 +55,10 @@ func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	entriesAfter := make(map[string][]byte, len(entriesAfterFI))
+	entriesAfter := make(map[string]changelog, len(entriesAfterFI))
 	for _, i := range entriesAfterFI {
-		f, err := wt.Filesystem.Open(filepath.Join(dir, i.Name()))
+		fp := filepath.Join(dir, i.Name())
+		f, err := wt.Filesystem.Open(fp)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +67,15 @@ func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
 		if err != nil {
 			return nil, err
 		}
-		entriesAfter[i.Name()] = contents
+		log, err := r.Log(&git.LogOptions{FileName: &fp})
+		if err != nil {
+			return nil, err
+		}
+		lastChange, err := log.Next()
+		if err != nil {
+			return nil, err
+		}
+		entriesAfter[i.Name()] = changelog{content: contents, date: lastChange.Author.When, hash: lastChange.Hash.String()}
 	}
 	if rev1 != nil {
 		err = wt.Checkout(&git.CheckoutOptions{
@@ -73,14 +91,17 @@ func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
 		}
 	}
 	entries := make([]Entry, 0, len(entriesAfter))
-	for name, contents := range entriesAfter {
+	for name, cl := range entriesAfter {
 		entries = append(entries, Entry{
 			Issue: name,
-			Body:  string(contents),
+			Body:  string(cl.content),
+			Date:  cl.date,
+			Hash:  cl.hash,
 		})
 	}
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Issue < entries[j].Issue
 	})
+
 	return entries, nil
 }

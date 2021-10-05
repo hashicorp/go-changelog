@@ -4,12 +4,15 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 )
 
 type Note struct {
 	Type  string
 	Body  string
 	Issue string
+	Hash  string
+	Date  time.Time
 }
 
 var textInBodyREs = []*regexp.Regexp{
@@ -53,6 +56,8 @@ func NotesFromEntry(entry Entry) []Note {
 				Type:  typ,
 				Body:  note,
 				Issue: entry.Issue,
+				Hash:  entry.Hash,
+				Date:  entry.Date,
 			})
 		}
 	}
