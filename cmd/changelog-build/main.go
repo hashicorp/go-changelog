@@ -73,7 +73,7 @@ func main() {
 
 	tmpl := template.New(filepath.Base(changelogTmpl)).Funcs(template.FuncMap{
 		"sort": func(in []changelog.Note) []changelog.Note {
-			sort.Slice(in, changelog.SortNotes(in))
+			sort.Slice(in, changelog.SortNotes(in, sortByDate))
 			return in
 		},
 		"combineTypes": func(in ...[]changelog.Note) []changelog.Note {
@@ -114,15 +114,15 @@ func main() {
 		if strings.HasSuffix(entry.Issue, ".txt") {
 			entry.Issue = strings.TrimSuffix(entry.Issue, ".txt")
 		}
-		notes = append(notes, changelog.NotesFromEntry(entry)...)
+		notes = append(notes, changelog.NotesFromEntry(entry, sortByDate)...)
 	}
 	for _, note := range notes {
 		notesByType[note.Type] = append(notesByType[note.Type], note)
 	}
 	for _, n := range notesByType {
-		sort.Slice(n, changelog.SortNotes(n))
+		sort.Slice(n, changelog.SortNotes(n, sortByDate))
 	}
-	sort.Slice(notes, changelog.SortNotes(notes))
+	sort.Slice(notes, changelog.SortNotes(notes, sortByDate))
 	type renderData struct {
 		Notes       []changelog.Note
 		NotesByType map[string][]changelog.Note

@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 )
 
 type Note struct {
@@ -11,6 +12,7 @@ type Note struct {
 	Body  string
 	Issue string
 	Hash  string
+	Date  time.Time
 }
 
 var textInBodyREs = []*regexp.Regexp{
@@ -20,7 +22,7 @@ var textInBodyREs = []*regexp.Regexp{
 	regexp.MustCompile("(?ms)^```releasenote:(?P<type>[^\r\n]*)\r?\n?(?P<note>.*?)\r?\n?```"),
 }
 
-func NotesFromEntry(entry Entry) []Note {
+func NotesFromEntry(entry Entry, sortByDate bool) []Note {
 	var res []Note
 	for _, re := range textInBodyREs {
 		matches := re.FindAllStringSubmatch(entry.Body, -1)
@@ -55,18 +57,23 @@ func NotesFromEntry(entry Entry) []Note {
 				Body:  note,
 				Issue: entry.Issue,
 				Hash:  entry.Hash,
+				Date:  entry.Date,
 			})
 		}
 	}
-	sort.Slice(res, SortNotes(res))
+	sort.Slice(res, SortNotes(res, sortByDate))
 	return res
 }
 
-func SortNotes(res []Note) func(i, j int) bool {
+func SortNotes(res []Note, sortByDate bool) func(i, j int) bool {
 	return func(i, j int) bool {
 		if res[i].Type < res[j].Type {
 			return true
 		} else if res[j].Type < res[i].Type {
+			return false
+		} else if sortByDate && res[i].Date.Before(res[j].Date) {
+			return false
+		} else if sortByDate && res[i].Date.After(res[j].Date) {
 			return false
 		} else if res[i].Body < res[j].Body {
 			return true
