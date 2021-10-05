@@ -10,6 +10,7 @@ type Note struct {
 	Type  string
 	Body  string
 	Issue string
+	Hash  string
 }
 
 var textInBodyREs = []*regexp.Regexp{
@@ -53,6 +54,7 @@ func NotesFromEntry(entry Entry) []Note {
 				Type:  typ,
 				Body:  note,
 				Issue: entry.Issue,
+				Hash:  entry.Hash,
 			})
 		}
 	}

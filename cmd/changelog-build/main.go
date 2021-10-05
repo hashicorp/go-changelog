@@ -19,12 +19,14 @@ func main() {
 		os.Exit(1)
 	}
 	var lastRelease, thisRelease, repoDir, entriesDir, noteTmpl, changelogTmpl string
+	var sortByDate bool
 	flag.StringVar(&lastRelease, "last-release", "", "a git ref to the last commit in the previous release")
 	flag.StringVar(&thisRelease, "this-release", "", "a git ref to the last commit to include in this release")
 	flag.StringVar(&repoDir, "git-dir", pwd, "the directory of the git repo being released")
 	flag.StringVar(&entriesDir, "entries-dir", "", "the directory within the repo containing changelog entry files")
 	flag.StringVar(&noteTmpl, "note-template", "", "the path of the file holding the template to use for each item in the changelog")
 	flag.StringVar(&changelogTmpl, "changelog-template", "", "the path of the file holding the template to use for the entire changelog")
+	flag.BoolVar(&sortByDate, "sort-by-date", false, "sort the entries by date instead of PR number on txt files")
 	flag.Parse()
 
 	if lastRelease == "" {
@@ -101,7 +103,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	entries, err := changelog.Diff(repoDir, lastRelease, thisRelease, entriesDir)
+	entries, err := changelog.Diff(repoDir, lastRelease, thisRelease, entriesDir, sortByDate)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
