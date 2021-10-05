@@ -74,7 +74,7 @@ func SortNotes(res []Note, sortByDate bool) func(i, j int) bool {
 		} else if sortByDate && res[i].Date.Before(res[j].Date) {
 			return false
 		} else if sortByDate && res[i].Date.After(res[j].Date) {
-			return false
+			return true
 		} else if res[i].Body < res[j].Body {
 			return true
 		} else if res[j].Body < res[i].Body {
