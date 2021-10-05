@@ -25,7 +25,7 @@ type changelog struct {
 	date    time.Time
 }
 
-func Diff(repo, ref1, ref2, dir string, sortByDate bool) ([]Entry, error) {
+func Diff(repo, ref1, ref2, dir string) ([]Entry, error) {
 	r, err := git.Clone(memory.NewStorage(), memfs.New(), &git.CloneOptions{
 		URL: repo,
 	})
@@ -99,15 +99,9 @@ func Diff(repo, ref1, ref2, dir string, sortByDate bool) ([]Entry, error) {
 			Hash:  cl.hash,
 		})
 	}
-	if sortByDate {
-		sort.Slice(entries, func(i, j int) bool {
-			return entries[i].Date.Before(entries[j].Date)
-		})
-	} else {
-		sort.Slice(entries, func(i, j int) bool {
-			return entries[i].Issue < entries[j].Issue
-		})
-	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Issue < entries[j].Issue
+	})
 
 	return entries, nil
 }

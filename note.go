@@ -22,7 +22,7 @@ var textInBodyREs = []*regexp.Regexp{
 	regexp.MustCompile("(?ms)^```releasenote:(?P<type>[^\r\n]*)\r?\n?(?P<note>.*?)\r?\n?```"),
 }
 
-func NotesFromEntry(entry Entry, sortByDate bool) []Note {
+func NotesFromEntry(entry Entry) []Note {
 	var res []Note
 	for _, re := range textInBodyREs {
 		matches := re.FindAllStringSubmatch(entry.Body, -1)
@@ -61,20 +61,16 @@ func NotesFromEntry(entry Entry, sortByDate bool) []Note {
 			})
 		}
 	}
-	sort.Slice(res, SortNotes(res, sortByDate))
+	sort.Slice(res, SortNotes(res))
 	return res
 }
 
-func SortNotes(res []Note, sortByDate bool) func(i, j int) bool {
+func SortNotes(res []Note) func(i, j int) bool {
 	return func(i, j int) bool {
 		if res[i].Type < res[j].Type {
 			return true
 		} else if res[j].Type < res[i].Type {
 			return false
-		} else if sortByDate && res[i].Date.Before(res[j].Date) {
-			return false
-		} else if sortByDate && res[i].Date.After(res[j].Date) {
-			return true
 		} else if res[i].Body < res[j].Body {
 			return true
 		} else if res[j].Body < res[i].Body {

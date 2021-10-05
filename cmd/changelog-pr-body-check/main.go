@@ -52,7 +52,7 @@ func main() {
 		Issue: pr,
 		Body:  pullRequest.GetBody(),
 	}
-	notes := changelog.NotesFromEntry(entry, false)
+	notes := changelog.NotesFromEntry(entry)
 	if len(notes) < 1 {
 		log.Printf("no changelog entry found in %s: %s", entry.Issue,
 			string(entry.Body))

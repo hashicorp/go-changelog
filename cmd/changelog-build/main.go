@@ -19,14 +19,12 @@ func main() {
 		os.Exit(1)
 	}
 	var lastRelease, thisRelease, repoDir, entriesDir, noteTmpl, changelogTmpl string
-	var sortByDate bool
 	flag.StringVar(&lastRelease, "last-release", "", "a git ref to the last commit in the previous release")
 	flag.StringVar(&thisRelease, "this-release", "", "a git ref to the last commit to include in this release")
 	flag.StringVar(&repoDir, "git-dir", pwd, "the directory of the git repo being released")
 	flag.StringVar(&entriesDir, "entries-dir", "", "the directory within the repo containing changelog entry files")
 	flag.StringVar(&noteTmpl, "note-template", "", "the path of the file holding the template to use for each item in the changelog")
 	flag.StringVar(&changelogTmpl, "changelog-template", "", "the path of the file holding the template to use for the entire changelog")
-	flag.BoolVar(&sortByDate, "sort-by-date", false, "sort the entries by date instead of PR number on txt files")
 	flag.Parse()
 
 	if lastRelease == "" {
@@ -73,7 +71,13 @@ func main() {
 
 	tmpl := template.New(filepath.Base(changelogTmpl)).Funcs(template.FuncMap{
 		"sort": func(in []changelog.Note) []changelog.Note {
-			sort.Slice(in, changelog.SortNotes(in, sortByDate))
+			sort.Slice(in, changelog.SortNotes(in))
+			return in
+		},
+		"sortByDate": func(in []changelog.Note) []changelog.Note {
+			sort.Slice(in, func(i, j int) bool {
+				return in[i].Date.Before(in[j].Date)
+			})
 			return in
 		},
 		"combineTypes": func(in ...[]changelog.Note) []changelog.Note {
@@ -103,7 +107,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	entries, err := changelog.Diff(repoDir, lastRelease, thisRelease, entriesDir, sortByDate)
+	entries, err := changelog.Diff(repoDir, lastRelease, thisRelease, entriesDir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -114,15 +118,15 @@ func main() {
 		if strings.HasSuffix(entry.Issue, ".txt") {
 			entry.Issue = strings.TrimSuffix(entry.Issue, ".txt")
 		}
-		notes = append(notes, changelog.NotesFromEntry(entry, sortByDate)...)
+		notes = append(notes, changelog.NotesFromEntry(entry)...)
 	}
 	for _, note := range notes {
 		notesByType[note.Type] = append(notesByType[note.Type], note)
 	}
 	for _, n := range notesByType {
-		sort.Slice(n, changelog.SortNotes(n, sortByDate))
+		sort.Slice(n, changelog.SortNotes(n))
 	}
-	sort.Slice(notes, changelog.SortNotes(notes, sortByDate))
+	sort.Slice(notes, changelog.SortNotes(notes))
 	type renderData struct {
 		Notes       []changelog.Note
 		NotesByType map[string][]changelog.Note
