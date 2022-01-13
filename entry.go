@@ -171,12 +171,12 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 				fp := filepath.Join(dir, n)
 				f, err := wt.Filesystem.Open(fp)
 				if err != nil {
-					return fmt.Errorf("error opening file at %s: %w", name, err)
+					return fmt.Errorf("error opening file at %s: %w", n, err)
 				}
 				contents, err := ioutil.ReadAll(f)
 				f.Close()
 				if err != nil {
-					return fmt.Errorf("error reading file at %s: %w", name, err)
+					return fmt.Errorf("error reading file at %s: %w", n, err)
 				}
 				log, err := r.Log(&git.LogOptions{FileName: &fp})
 				if err != nil {
@@ -187,7 +187,7 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 					return err
 				}
 				entries.Append(&Entry{
-					Issue: name,
+					Issue: n,
 					Body:  string(contents),
 					Date:  lastChange.Author.When,
 					Hash:  lastChange.Hash.String(),
