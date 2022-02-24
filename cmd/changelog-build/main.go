@@ -114,11 +114,12 @@ func main() {
 	}
 	var notes []changelog.Note
 	notesByType := map[string][]changelog.Note{}
-	for _, entry := range entries {
+	for i := 0; i < entries.Len(); i++ {
+		entry := entries.Get(i)
 		if strings.HasSuffix(entry.Issue, ".txt") {
 			entry.Issue = strings.TrimSuffix(entry.Issue, ".txt")
 		}
-		notes = append(notes, changelog.NotesFromEntry(entry)...)
+		notes = append(notes, changelog.NotesFromEntry(*entry)...)
 	}
 	for _, note := range notes {
 		notesByType[note.Type] = append(notesByType[note.Type], note)
