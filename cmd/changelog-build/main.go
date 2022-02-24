@@ -3,16 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"text/template"
-
-	// needed to create flame graphs
-	"net/http"
-	_ "net/http/pprof"
 
 	"github.com/hashicorp/go-changelog"
 )
@@ -73,11 +68,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	go func() {
-		log.Println("Starting pprof server on localhost:8080...")
-		log.Println(http.ListenAndServe("localhost:8080", nil))
-	}()
 
 	tmpl := template.New(filepath.Base(changelogTmpl)).Funcs(template.FuncMap{
 		"sort": func(in []changelog.Note) []changelog.Note {

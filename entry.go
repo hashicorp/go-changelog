@@ -180,11 +180,11 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 				}
 				log, err := r.Log(&git.LogOptions{FileName: &fp})
 				if err != nil {
-					return err
+					return fmt.Errorf("error fetching git log for %s: %w", name, err)
 				}
 				lastChange, err := log.Next()
 				if err != nil {
-					return err
+					return fmt.Errorf("error fetching next git log: %w", err)
 				}
 				entries.Append(&Entry{
 					Issue: n,
