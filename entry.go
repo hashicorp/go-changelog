@@ -167,37 +167,34 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	entries := NewEntryList(len(entryCandidates))
 	errg := new(errgroup.Group)
 	for name := range entryCandidates {
-		// curry the name parameter
-		fn := func(n string) func() error {
-			return func() error {
-				fp := filepath.Join(dir, n)
-				f, err := wt.Filesystem.Open(fp)
-				if err != nil {
-					return fmt.Errorf("error opening file at %s: %w", n, err)
-				}
-				contents, err := ioutil.ReadAll(f)
-				f.Close()
-				if err != nil {
-					return fmt.Errorf("error reading file at %s: %w", n, err)
-				}
-				log, err := r.Log(&git.LogOptions{FileName: &fp})
-				if err != nil {
-					return fmt.Errorf("error fetching git log for %s: %w", name, err)
-				}
-				lastChange, err := log.Next()
-				if err != nil {
-					return fmt.Errorf("error fetching next git log: %w", err)
-				}
-				entries.Append(&Entry{
-					Issue: n,
-					Body:  string(contents),
-					Date:  lastChange.Author.When,
-					Hash:  lastChange.Hash.String(),
-				})
-				return nil
+		name := name // https://golang.org/doc/faq#closures_and_goroutines
+		errg.Go(func() error {
+			fp := filepath.Join(dir, name)
+			f, err := wt.Filesystem.Open(fp)
+			if err != nil {
+				return fmt.Errorf("error opening file at %s: %w", name, err)
 			}
-		}
-		errg.Go(fn(name))
+			contents, err := ioutil.ReadAll(f)
+			f.Close()
+			if err != nil {
+				return fmt.Errorf("error reading file at %s: %w", name, err)
+			}
+			log, err := r.Log(&git.LogOptions{FileName: &fp})
+			if err != nil {
+				return fmt.Errorf("error fetching git log for %s: %w", name, err)
+			}
+			lastChange, err := log.Next()
+			if err != nil {
+				return fmt.Errorf("error fetching next git log: %w", err)
+			}
+			entries.Append(&Entry{
+				Issue: name,
+				Body:  string(contents),
+				Date:  lastChange.Author.When,
+				Hash:  lastChange.Hash.String(),
+			})
+			return nil
+		})
 	}
 	if err := errg.Wait(); err != nil {
 		return nil, err
