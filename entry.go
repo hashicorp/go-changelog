@@ -46,11 +46,11 @@ func (el *EntryList) Append(entries ...*Entry) {
 
 // Get returns the Entry at index i
 func (el *EntryList) Get(i int) *Entry {
+	el.mu.RLock()
+	defer el.mu.RUnlock()
 	if i >= len(el.es) || i < 0 {
 		return nil
 	}
-	el.mu.RLock()
-	defer el.mu.RUnlock()
 	return el.es[i]
 }
 
@@ -74,6 +74,8 @@ func (el *EntryList) Set(i int, e *Entry) {
 
 // Len returns the number of items in the EntryList
 func (el *EntryList) Len() int {
+	el.mu.RLock()
+	defer el.mu.RUnlock()
 	return len(el.es)
 }
 
