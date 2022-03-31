@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-changelog"
 	"github.com/manifoldco/promptui"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"text/template"
@@ -39,7 +40,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	var subcategory, changeType, description, changelogTmpl, url string
+	var subcategory, changeType, description, changelogTmpl, dir, url string
 	var pr int
 	var Url bool
 	flag.BoolVar(&Url, "add-url", false, "add GitHub issue URL (omitted by default due to formatting in changelog-build)")
@@ -48,6 +49,7 @@ func main() {
 	flag.StringVar(&changeType, "type", "", "the type of change")
 	flag.StringVar(&description, "description", "", "the changelog entry content")
 	flag.StringVar(&changelogTmpl, "changelog-template", "", "the path of the file holding the template to use for the changelog entries")
+	flag.StringVar(&dir, "dir", "", "the relative path from the current directory of where the changelog entry file should be written")
 	flag.Parse()
 
 	if pr == -1 {
@@ -128,7 +130,8 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	filepath := fmt.Sprintf("%s/%d.txt", pwd, pr)
+	filename := fmt.Sprintf("%d.txt", pr)
+	filepath := path.Join(pwd, dir, filename)
 	err = os.WriteFile(filepath, buf.Bytes(), 0644)
 	if err != nil {
 		os.Exit(1)
