@@ -1,3 +1,0 @@
-```release-note:{{ .Type}}
-{{if eq .URL ""}}{{if eq .Service ""}}{{.Description}}.{{else}}{{.Service}}: {{.Description}}.{{end}}{{else}}{{if eq .Service ""}}{{.Description}}. [GH-{{.Pr}}]({{.URL}}){{else}}{{.Service}}: {{.Description}}. [GH-{{.Pr}}]({{.URL}}){{end}}{{end}}
-```
