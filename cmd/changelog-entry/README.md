@@ -30,4 +30,4 @@ monitoring: optimize the monitoring endpoint to avoid losing logs when under hig
 ```
 ``````
 
-Any failures will be logged to stderr. The entry will be written to a file named `{PR_NUMBER}.txt`, in the current directory unless an output path is specified.
+Any failures will be logged to stderr. The entry will be written to a file named `{PR_NUMBER}.txt`, in the current directory unless an output directory is specified.
