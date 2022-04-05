@@ -74,17 +74,7 @@ func main() {
 	}
 	var unknownTypes []string
 	for _, note := range notes {
-		switch note.Type {
-		case "none",
-			"bug",
-			"note",
-			"enhancement",
-			"new-resource",
-			"new-datasource",
-			"deprecation",
-			"breaking-change",
-			"feature":
-		default:
+		if !changelog.TypeValid(note.Type) {
 			unknownTypes = append(unknownTypes, note.Type)
 		}
 	}
