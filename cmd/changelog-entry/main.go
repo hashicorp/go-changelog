@@ -34,24 +34,26 @@ type Note struct {
 	URL string
 }
 
+func init() {
+	flag.Bool("add-url", false, "add GitHub issue URL (omitted by default due to formatting in changelog-build)")
+	flag.Int("pr", -1, "pull request number")
+	flag.String("subcategory", "", "the service or area of the codebase the pull request changes (optional)")
+	flag.String("type", "", "the type of change")
+	flag.String("description", "", "the changelog entry content")
+	flag.String("changelog-template", "", "the path of the file holding the template to use for the changelog entries")
+	flag.String("dir", "", "the relative path from the current directory of where the changelog entry file should be written")
+	flag.Parse()
+}
+
 func main() {
 	pwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	var subcategory, changeType, description, changelogTmpl, dir, url string
-	var pr int
-	var Url bool
-	flag.BoolVar(&Url, "add-url", false, "add GitHub issue URL (omitted by default due to formatting in changelog-build)")
-	flag.IntVar(&pr, "pr", -1, "pull request number")
-	flag.StringVar(&subcategory, "subcategory", "", "the service or area of the codebase the pull request changes (optional)")
-	flag.StringVar(&changeType, "type", "", "the type of change")
-	flag.StringVar(&description, "description", "", "the changelog entry content")
-	flag.StringVar(&changelogTmpl, "changelog-template", "", "the path of the file holding the template to use for the changelog entries")
-	flag.StringVar(&dir, "dir", "", "the relative path from the current directory of where the changelog entry file should be written")
-	flag.Parse()
 
+	var url string
+	pr := flag.Lookup("pr").Value.(flag.Getter).Get().(int)
 	if pr == -1 {
 		pr, url, err = getPrNumberFromGithub(pwd)
 		if err != nil {
@@ -60,13 +62,14 @@ func main() {
 			flag.Usage()
 			os.Exit(1)
 		}
+		fmt.Fprintln(os.Stderr, "Found matching pull request:", url)
 	}
-	fmt.Fprintln(os.Stderr, "Found matching pull request:", url)
 
+	changeType := flag.Lookup("type").Value.(flag.Getter).Get().(string)
 	if changeType == "" {
 		prompt := promptui.Select{
 			Label: "Select a change type",
-			Items: changelog.TypeValues,
+			Items: changelog.TypeValues(),
 		}
 
 		_, changeType, err = prompt.Run()
@@ -86,11 +89,13 @@ func main() {
 		}
 	}
 
+	subcategory := flag.Lookup("subcategory").Value.(flag.Getter).Get().(string)
 	if subcategory == "" {
 		prompt := promptui.Prompt{Label: "Subcategory (optional)"}
 		subcategory, err = prompt.Run()
 	}
 
+	description := flag.Lookup("description").Value.(flag.Getter).Get().(string)
 	if description == "" {
 		prompt := promptui.Prompt{Label: "Description"}
 		description, err = prompt.Run()
@@ -103,23 +108,28 @@ func main() {
 	}
 
 	var tmpl *template.Template
-	if changelogTmpl != "" {
+	changelogTmpl := flag.Lookup("changelog-template").Value.(flag.Getter).Get().(string)
+	if changelogTmpl == "" {
+		tmpl, err = template.New("").Parse(changelogTmplDefault)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error creating changelog template from defaults:", err)
+			os.Exit(1)
+		}
+	} else {
 		file, err := os.ReadFile(changelogTmpl)
 		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error reading changelog template file:", err)
 			os.Exit(1)
 		}
 		tmpl, err = template.New("").Parse(string(file))
 		if err != nil {
-			os.Exit(1)
-		}
-	} else {
-		tmpl, err = template.New("").Parse(changelogTmplDefault)
-		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error creating changelog template:", err)
 			os.Exit(1)
 		}
 	}
 
-	if !Url {
+	addUrl := flag.Lookup("add-url").Value.(flag.Getter).Get().(bool)
+	if !addUrl {
 		url = ""
 	}
 	n := Note{Type: changeType, Description: description, Subcategory: subcategory, PR: pr, URL: url}
@@ -128,12 +138,16 @@ func main() {
 	err = tmpl.Execute(&buf, n)
 	fmt.Printf("\n%s\n", buf.String())
 	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error rendering changelog entry:", err)
 		os.Exit(1)
 	}
+
 	filename := fmt.Sprintf("%d.txt", pr)
+	dir := flag.Lookup("dir").Value.(flag.Getter).Get().(string)
 	filepath := path.Join(pwd, dir, filename)
 	err = os.WriteFile(filepath, buf.Bytes(), 0644)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error writing changelog entry to file:", err)
 		os.Exit(1)
 	}
 	fmt.Fprintln(os.Stderr, "Created changelog entry at", filepath)

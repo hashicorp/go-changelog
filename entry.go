@@ -1,10 +1,14 @@
 package changelog
 
 import (
+	_ "embed"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,15 +20,8 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
-var TypeValues = []string{"enhancement",
-	"feature",
-	"bug",
-	"note",
-	"new-resource",
-	"new-datasource",
-	"deprecation",
-	"breaking-change",
-}
+//go:embed types.txt
+var defaultTypes string
 
 type Entry struct {
 	Issue string
@@ -37,6 +34,10 @@ type Entry struct {
 type EntryList struct {
 	mu sync.RWMutex
 	es []*Entry
+}
+
+func init() {
+	flag.String("types-file", "", "the path of a file holding a line-delimited list of valid changelog entry types")
 }
 
 // NewEntryList returns an EntryList with capacity c
@@ -139,7 +140,7 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	if err := wt.Checkout(&git.CheckoutOptions{
 		Hash:  *rev2,
 		Force: true,
-  }); err != nil {
+	}); err != nil {
 		return nil, fmt.Errorf("could not checkout repository at %s: %w", ref2, err)
 	}
 	entriesAfterFI, err := wt.Filesystem.ReadDir(dir)
@@ -215,8 +216,30 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	return entries, nil
 }
 
+// TODO: memoize?
+func TypeValues() []string {
+	var types string
+
+	changeTypesPath := flag.Lookup("types-file").Value.(flag.Getter).Get().(string)
+	fmt.Fprintln(os.Stderr, changeTypesPath)
+
+	if changeTypesPath != "" {
+		file, err := os.ReadFile(changeTypesPath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, changeTypesPath)
+			fmt.Fprintln(os.Stderr, "Error reading changelog entry types file:", err)
+			os.Exit(1)
+		}
+		types = strings.TrimSpace(string(file))
+	} else {
+		types = defaultTypes
+	}
+
+	return strings.Split(types, "\n")
+}
+
 func TypeValid(Type string) bool {
-	for _, a := range TypeValues {
+	for _, a := range TypeValues() {
 		if a == Type {
 			return true
 		}

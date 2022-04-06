@@ -1,0 +1,8 @@
+enhancement
+feature
+bug
+note
+new-resource
+new-datasource
+deprecation
+breaking-change
