@@ -76,7 +76,7 @@ func (e *Entry) Validate() *EntryValidationError {
 
 	if len(unknownTypes) > 0 {
 		return &EntryValidationError{
-			message: fmt.Sprintf("unknown changelog types %v: please use only the configured changelog entry types: %v", unknownTypes, TypeValues()),
+			message: fmt.Sprintf("unknown changelog types %v: please use only the configured changelog entry types: %v", unknownTypes, TypeValues),
 			Code:    EntryErrorUnknownTypes,
 			Details: map[string]interface{}{
 				"unknownTypes": unknownTypes,
