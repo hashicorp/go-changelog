@@ -49,6 +49,7 @@ const (
 type EntryValidationError struct {
 	message string
 	Code    EntryErrorCode
+	Details map[string]interface{}
 }
 
 func (e *EntryValidationError) Error() string {
@@ -77,6 +78,9 @@ func (e *Entry) Validate() *EntryValidationError {
 		return &EntryValidationError{
 			message: fmt.Sprintf("unknown changelog types %v: please use only the configured changelog entry types: %v", unknownTypes, TypeValues()),
 			Code:    EntryErrorUnknownTypes,
+			Details: map[string]interface{}{
+				"unknownTypes": unknownTypes,
+			},
 		}
 	}
 
