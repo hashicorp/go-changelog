@@ -39,12 +39,31 @@ type EntryList struct {
 	es []*Entry
 }
 
+type EntryErrorCode string
+
+const (
+	EntryErrorNotFound     EntryErrorCode = "NOT_FOUND"
+	EntryErrorUnknownTypes EntryErrorCode = "UNKNOWN_TYPES"
+)
+
+type EntryValidationError struct {
+	message string
+	Code    EntryErrorCode
+}
+
+func (e *EntryValidationError) Error() string {
+	return e.message
+}
+
 // Validates that an Entry body contains properly formatted changelog notes
-func (e *Entry) Validate() error {
+func (e *Entry) Validate() *EntryValidationError {
 	notes := NotesFromEntry(*e)
 
 	if len(notes) < 1 {
-		return fmt.Errorf("no changelog entry found in: %s", string(e.Body))
+		return &EntryValidationError{
+			message: fmt.Sprintf("no changelog entry found in: %s", string(e.Body)),
+			Code:    EntryErrorNotFound,
+		}
 	}
 
 	var unknownTypes []string
@@ -55,7 +74,10 @@ func (e *Entry) Validate() error {
 	}
 
 	if len(unknownTypes) > 0 {
-		return fmt.Errorf("unknown changelog types %v: please use only the configured changelog entry types: %v", unknownTypes, TypeValues())
+		return &EntryValidationError{
+			message: fmt.Sprintf("unknown changelog types %v: please use only the configured changelog entry types: %v", unknownTypes, TypeValues()),
+			Code:    EntryErrorUnknownTypes,
+		}
 	}
 
 	return nil
