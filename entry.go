@@ -39,6 +39,54 @@ type EntryList struct {
 	es []*Entry
 }
 
+type EntryErrorCode string
+
+const (
+	EntryErrorNotFound     EntryErrorCode = "NOT_FOUND"
+	EntryErrorUnknownTypes EntryErrorCode = "UNKNOWN_TYPES"
+)
+
+type EntryValidationError struct {
+	message string
+	Code    EntryErrorCode
+	Details map[string]interface{}
+}
+
+func (e *EntryValidationError) Error() string {
+	return e.message
+}
+
+// Validates that an Entry body contains properly formatted changelog notes
+func (e *Entry) Validate() *EntryValidationError {
+	notes := NotesFromEntry(*e)
+
+	if len(notes) < 1 {
+		return &EntryValidationError{
+			message: fmt.Sprintf("no changelog entry found in: %s", string(e.Body)),
+			Code:    EntryErrorNotFound,
+		}
+	}
+
+	var unknownTypes []string
+	for _, note := range notes {
+		if !TypeValid(note.Type) {
+			unknownTypes = append(unknownTypes, note.Type)
+		}
+	}
+
+	if len(unknownTypes) > 0 {
+		return &EntryValidationError{
+			message: fmt.Sprintf("unknown changelog types %v: please use only the configured changelog entry types: %v", unknownTypes, TypeValues),
+			Code:    EntryErrorUnknownTypes,
+			Details: map[string]interface{}{
+				"unknownTypes": unknownTypes,
+			},
+		}
+	}
+
+	return nil
+}
+
 // NewEntryList returns an EntryList with capacity c
 func NewEntryList(c int) *EntryList {
 	return &EntryList{
@@ -139,7 +187,7 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	if err := wt.Checkout(&git.CheckoutOptions{
 		Hash:  *rev2,
 		Force: true,
-  }); err != nil {
+	}); err != nil {
 		return nil, fmt.Errorf("could not checkout repository at %s: %w", ref2, err)
 	}
 	entriesAfterFI, err := wt.Filesystem.ReadDir(dir)
