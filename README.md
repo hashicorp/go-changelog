@@ -25,7 +25,7 @@ the changes that have been added between the two commits.
 To run the command line binaries, use Go to build the commands. For example:
 
 ```sh
-$ go get github.com/hashicorp/go-changelog/cmd/changelog-pr-body-check
+$ go install github.com/hashicorp/go-changelog/cmd/changelog-pr-body-check@latest
 ```
 
 ### Docker
