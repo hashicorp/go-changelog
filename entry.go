@@ -16,7 +16,9 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
-var TypeValues = []string{"enhancement",
+var TypeValues = []string{
+	"enhancement",
+	"improvement",
 	"feature",
 	"bug",
 	"note",
