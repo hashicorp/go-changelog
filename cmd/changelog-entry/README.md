@@ -10,6 +10,7 @@ The type parameter can be one of the following:
 * enhancement
 * new-resource
 * new-datasource
+* new-function
 * deprecation
 * breaking-change
 * feature
