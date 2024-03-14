@@ -10,15 +10,16 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/google/go-github/github"
-	"github.com/hashicorp/go-changelog"
-	"github.com/manifoldco/promptui"
 	"os"
 	"path"
 	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/google/go-github/github"
+	"github.com/hashicorp/go-changelog"
+	"github.com/manifoldco/promptui"
 )
 
 //go:embed changelog-entry.tmpl
@@ -43,7 +44,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	var subcategory, changeType, description, changelogTmpl, dir, url string
+	var subcategory, changeType, description, changelogTmpl, dir, url, allowedTypes string
 	var pr int
 	var Url bool
 	flag.BoolVar(&Url, "add-url", false, "add GitHub issue URL (omitted by default due to formatting in changelog-build)")
@@ -53,6 +54,7 @@ func main() {
 	flag.StringVar(&description, "description", "", "the changelog entry content")
 	flag.StringVar(&changelogTmpl, "changelog-template", "", "the path of the file holding the template to use for the changelog entries")
 	flag.StringVar(&dir, "dir", "", "the relative path from the current directory of where the changelog entry file should be written")
+	flag.StringVar(&allowedTypes, "allowed-types-file", "", "the relative path from the current directory to a line separated file of allowed types. If not provided, default types are used")
 	flag.Parse()
 
 	if pr == -1 {
@@ -66,10 +68,21 @@ func main() {
 	}
 	fmt.Fprintln(os.Stderr, "Found matching pull request:", url)
 
+	promptTypes := changelog.TypeValues
+	if allowedTypes != "" {
+		file, err := os.ReadFile(allowedTypes)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read allowed types file: %s\n", err)
+			os.Exit(1)
+		}
+
+		promptTypes = strings.Split(strings.TrimSpace(string(file)), "\n")
+	}
+
 	if changeType == "" {
 		prompt := promptui.Select{
 			Label: "Select a change type",
-			Items: changelog.TypeValues,
+			Items: promptTypes,
 		}
 
 		_, changeType, err = prompt.Run()
