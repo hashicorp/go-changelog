@@ -19,7 +19,7 @@ BREAKING CHANGES:
 {{ end -}}
 {{- end -}}
 
-{{- $features := combineTypes .NotesByType.feature (index .NotesByType "new-resource" ) (index .NotesByType "new-datasource") (index .NotesByType "new-data-source") (index .NotesByType "new-function" ) -}}
+{{- $features := combineTypes .NotesByType.feature (index .NotesByType "new-resource" ) (index .NotesByType "new-datasource") (index .NotesByType "new-data-source") (index .NotesByType "new-function" ) (index .NotesByType "new-ephemeral" ) -}}
 {{- if $features }}
 FEATURES:
 {{range $features | sort -}}
