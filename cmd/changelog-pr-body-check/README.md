@@ -14,6 +14,7 @@ following types of entries:
 * enhancement
 * new-resource
 * new-datasource
+* new-ephemeral
 * new-function
 * deprecation
 * breaking-change
