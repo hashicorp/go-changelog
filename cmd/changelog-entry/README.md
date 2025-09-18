@@ -12,6 +12,7 @@ The type parameter can be one of the following:
 * new-datasource
 * new-ephemeral
 * new-function
+* new-action
 * deprecation
 * breaking-change
 * feature

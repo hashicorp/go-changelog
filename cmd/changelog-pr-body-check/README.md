@@ -16,6 +16,7 @@ following types of entries:
 * new-datasource
 * new-ephemeral
 * new-function
+* new-action
 * deprecation
 * breaking-change
 * feature
