@@ -28,6 +28,7 @@ var TypeValues = []string{
 	"new-resource",
 	"new-datasource",
 	"new-ephemeral",
+	"new-list-resource",
 	"new-function",
 	"new-action",
 	"deprecation",
