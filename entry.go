@@ -11,12 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
-	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/storage/memory"
 )
 
 var TypeValues = []string{
@@ -171,9 +167,10 @@ type changelog struct {
 //
 // Along the way, if any git or filesystem interactions fail, an error is returned.
 func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
-	r, err := git.Clone(memory.NewStorage(), memfs.New(), &git.CloneOptions{
-		URL: repo,
-	})
+	r, err := git.PlainOpen(repo)
+	//r, err := git.Clone(memory.NewStorage(), memfs.New(), &git.CloneOptions{
+	//	URL: repo,
+	//})
 	if err != nil {
 		return nil, err
 	}
@@ -233,39 +230,31 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	}
 
 	entries := NewEntryList(len(entryCandidates))
-	errg := new(errgroup.Group)
 	for name := range entryCandidates {
-		name := name // https://golang.org/doc/faq#closures_and_goroutines
-		errg.Go(func() error {
-			fp := filepath.Join(dir, name)
-			f, err := wt.Filesystem.Open(fp)
-			if err != nil {
-				return fmt.Errorf("error opening file at %s: %w", name, err)
-			}
-			contents, err := ioutil.ReadAll(f)
-			f.Close()
-			if err != nil {
-				return fmt.Errorf("error reading file at %s: %w", name, err)
-			}
-			log, err := r.Log(&git.LogOptions{FileName: &fp})
-			if err != nil {
-				return fmt.Errorf("error fetching git log for %s: %w", name, err)
-			}
-			lastChange, err := log.Next()
-			if err != nil {
-				return fmt.Errorf("error fetching next git log: %w", err)
-			}
-			entries.Append(&Entry{
-				Issue: name,
-				Body:  string(contents),
-				Date:  lastChange.Author.When,
-				Hash:  lastChange.Hash.String(),
-			})
-			return nil
+		fp := filepath.Join(dir, name)
+		f, err := wt.Filesystem.Open(fp)
+		if err != nil {
+			return nil, fmt.Errorf("error opening file at %s: %w", name, err)
+		}
+		contents, err := ioutil.ReadAll(f)
+		f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("error reading file at %s: %w", name, err)
+		}
+		log, err := r.Log(&git.LogOptions{FileName: &fp})
+		if err != nil {
+			return nil, fmt.Errorf("error fetching git log for %s: %w", name, err)
+		}
+		lastChange, err := log.Next()
+		if err != nil {
+			return nil, fmt.Errorf("error fetching next git log: %w", err)
+		}
+		entries.Append(&Entry{
+			Issue: name,
+			Body:  string(contents),
+			Date:  lastChange.Author.When,
+			Hash:  lastChange.Hash.String(),
 		})
-	}
-	if err := errg.Wait(); err != nil {
-		return nil, err
 	}
 	entries.SortByIssue()
 	return entries, nil
