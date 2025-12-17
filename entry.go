@@ -11,8 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/storage/memory"
 )
 
 var TypeValues = []string{
@@ -165,15 +167,34 @@ type changelog struct {
 // entries found in dir. The resulting set of entries is then filtered to
 // exclude any entries that came before the commit date of ref1.
 //
+// It clones the repository into memory for processing, so makes no changes
+// to the local filesystem, but may use significant memory for large repositories.
+//
 // Along the way, if any git or filesystem interactions fail, an error is returned.
 func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
-	r, err := git.PlainOpen(repo)
-	//r, err := git.Clone(memory.NewStorage(), memfs.New(), &git.CloneOptions{
-	//	URL: repo,
-	//})
+	r, err := git.Clone(memory.NewStorage(), memfs.New(), &git.CloneOptions{
+		URL: repo,
+	})
 	if err != nil {
 		return nil, err
 	}
+	return diff(r, ref1, ref2, dir)
+}
+
+// DiffLocal returns the slice of Entry values that are present in ref1 but not
+// in ref2 within the local git repository at repoPath.
+//
+// It calculates the diff the same way as Diff, but operates on the local
+// filesystem rather than cloning the repo into memory.
+func DiffLocal(repoPath, ref1, ref2, dir string) (*EntryList, error) {
+	r, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return nil, err
+	}
+	return diff(r, ref1, ref2, dir)
+}
+
+func diff(r *git.Repository, ref1, ref2, dir string) (*EntryList, error) {
 	rev2, err := r.ResolveRevision(plumbing.Revision(ref2))
 	if err != nil {
 		return nil, fmt.Errorf("could not resolve revision %s: %w", ref2, err)
