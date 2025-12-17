@@ -178,23 +178,27 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	if err != nil {
 		return nil, err
 	}
-	return diff(r, ref1, ref2, dir)
+	return diff(r, ref1, ref2, dir, true)
 }
 
-// DiffLocal returns the slice of Entry values that are present in ref1 but not
+// DiffLocal returns a list of entries that are present in ref1 but not
 // in ref2 within the local git repository at repoPath.
 //
-// It calculates the diff the same way as Diff, but operates on the local
+// It calculates the list the same way as Diff, but operates on the local
 // filesystem rather than cloning the repo into memory.
+//
+// Since it operates on the local filesystem, it will modify repository state.
+// Namely, it checks out each ref, leaving whatever branch or other ref
+// is currently checked out. Use with caution, preferably on a clean clone.
 func DiffLocal(repoPath, ref1, ref2, dir string) (*EntryList, error) {
 	r, err := git.PlainOpen(repoPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening repository at %q: %w", repoPath, err)
 	}
-	return diff(r, ref1, ref2, dir)
+	return diff(r, ref1, ref2, dir, false)
 }
 
-func diff(r *git.Repository, ref1, ref2, dir string) (*EntryList, error) {
+func diff(r *git.Repository, ref1, ref2, dir string, forceCheckout bool) (*EntryList, error) {
 	rev2, err := r.ResolveRevision(plumbing.Revision(ref2))
 	if err != nil {
 		return nil, fmt.Errorf("could not resolve revision %s: %w", ref2, err)
@@ -212,7 +216,7 @@ func diff(r *git.Repository, ref1, ref2, dir string) (*EntryList, error) {
 	}
 	if err := wt.Checkout(&git.CheckoutOptions{
 		Hash:  *rev2,
-		Force: true,
+		Force: forceCheckout,
 	}); err != nil {
 		return nil, fmt.Errorf("could not checkout repository at %s: %w", ref2, err)
 	}
@@ -229,7 +233,7 @@ func diff(r *git.Repository, ref1, ref2, dir string) (*EntryList, error) {
 	if rev1 != nil {
 		err = wt.Checkout(&git.CheckoutOptions{
 			Hash:  *rev1,
-			Force: true,
+			Force: forceCheckout,
 		})
 		if err != nil {
 			return nil, err
@@ -244,7 +248,7 @@ func diff(r *git.Repository, ref1, ref2, dir string) (*EntryList, error) {
 		// checkout rev2 so that we can read files later
 		if err := wt.Checkout(&git.CheckoutOptions{
 			Hash:  *rev2,
-			Force: true,
+			Force: forceCheckout,
 		}); err != nil {
 			return nil, fmt.Errorf("could not checkout repository at %s: %w", ref2, err)
 		}
