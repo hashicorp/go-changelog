@@ -11,12 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
-	"github.com/go-git/go-billy/v5/memfs"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/go-git/go-billy/v6/memfs"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/storage/memory"
 )
 
 var TypeValues = []string{
@@ -169,6 +167,9 @@ type changelog struct {
 // entries found in dir. The resulting set of entries is then filtered to
 // exclude any entries that came before the commit date of ref1.
 //
+// It clones the repository into memory for processing, so makes no changes
+// to the local filesystem, but may use significant memory for large repositories.
+//
 // Along the way, if any git or filesystem interactions fail, an error is returned.
 func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	r, err := git.Clone(memory.NewStorage(), memfs.New(), &git.CloneOptions{
@@ -177,6 +178,27 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	if err != nil {
 		return nil, err
 	}
+	return diff(r, ref1, ref2, dir, true)
+}
+
+// DiffLocal returns a list of entries that are present in ref1 but not
+// in ref2 within the local git repository at repoPath.
+//
+// It calculates the list the same way as Diff, but operates on the local
+// filesystem rather than cloning the repo into memory.
+//
+// Since it operates on the local filesystem, it will modify repository state.
+// Namely, it checks out each ref, leaving whatever branch or other ref
+// is currently checked out. Use with caution, preferably on a clean clone.
+func DiffLocal(repoPath, ref1, ref2, dir string) (*EntryList, error) {
+	r, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening repository at %q: %w", repoPath, err)
+	}
+	return diff(r, ref1, ref2, dir, false)
+}
+
+func diff(r *git.Repository, ref1, ref2, dir string, forceCheckout bool) (*EntryList, error) {
 	rev2, err := r.ResolveRevision(plumbing.Revision(ref2))
 	if err != nil {
 		return nil, fmt.Errorf("could not resolve revision %s: %w", ref2, err)
@@ -194,7 +216,7 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	}
 	if err := wt.Checkout(&git.CheckoutOptions{
 		Hash:  *rev2,
-		Force: true,
+		Force: forceCheckout,
 	}); err != nil {
 		return nil, fmt.Errorf("could not checkout repository at %s: %w", ref2, err)
 	}
@@ -211,7 +233,7 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 	if rev1 != nil {
 		err = wt.Checkout(&git.CheckoutOptions{
 			Hash:  *rev1,
-			Force: true,
+			Force: forceCheckout,
 		})
 		if err != nil {
 			return nil, err
@@ -226,46 +248,38 @@ func Diff(repo, ref1, ref2, dir string) (*EntryList, error) {
 		// checkout rev2 so that we can read files later
 		if err := wt.Checkout(&git.CheckoutOptions{
 			Hash:  *rev2,
-			Force: true,
+			Force: forceCheckout,
 		}); err != nil {
 			return nil, fmt.Errorf("could not checkout repository at %s: %w", ref2, err)
 		}
 	}
 
 	entries := NewEntryList(len(entryCandidates))
-	errg := new(errgroup.Group)
 	for name := range entryCandidates {
-		name := name // https://golang.org/doc/faq#closures_and_goroutines
-		errg.Go(func() error {
-			fp := filepath.Join(dir, name)
-			f, err := wt.Filesystem.Open(fp)
-			if err != nil {
-				return fmt.Errorf("error opening file at %s: %w", name, err)
-			}
-			contents, err := ioutil.ReadAll(f)
-			f.Close()
-			if err != nil {
-				return fmt.Errorf("error reading file at %s: %w", name, err)
-			}
-			log, err := r.Log(&git.LogOptions{FileName: &fp})
-			if err != nil {
-				return fmt.Errorf("error fetching git log for %s: %w", name, err)
-			}
-			lastChange, err := log.Next()
-			if err != nil {
-				return fmt.Errorf("error fetching next git log: %w", err)
-			}
-			entries.Append(&Entry{
-				Issue: name,
-				Body:  string(contents),
-				Date:  lastChange.Author.When,
-				Hash:  lastChange.Hash.String(),
-			})
-			return nil
+		fp := filepath.Join(dir, name)
+		f, err := wt.Filesystem.Open(fp)
+		if err != nil {
+			return nil, fmt.Errorf("error opening file at %s: %w", name, err)
+		}
+		contents, err := ioutil.ReadAll(f)
+		f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("error reading file at %s: %w", name, err)
+		}
+		log, err := r.Log(&git.LogOptions{FileName: &fp})
+		if err != nil {
+			return nil, fmt.Errorf("error fetching git log for %s: %w", name, err)
+		}
+		lastChange, err := log.Next()
+		if err != nil {
+			return nil, fmt.Errorf("error fetching next git log: %w", err)
+		}
+		entries.Append(&Entry{
+			Issue: name,
+			Body:  string(contents),
+			Date:  lastChange.Author.When,
+			Hash:  lastChange.Hash.String(),
 		})
-	}
-	if err := errg.Wait(); err != nil {
-		return nil, err
 	}
 	entries.SortByIssue()
 	return entries, nil
