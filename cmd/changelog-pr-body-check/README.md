@@ -15,6 +15,7 @@ following types of entries:
 * new-resource
 * new-datasource
 * new-ephemeral
+* new-list-resource
 * new-function
 * new-action
 * deprecation

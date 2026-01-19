@@ -11,6 +11,7 @@ The type parameter can be one of the following:
 * new-resource
 * new-datasource
 * new-ephemeral
+* new-list-resource
 * new-function
 * new-action
 * deprecation
