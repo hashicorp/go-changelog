@@ -3,9 +3,8 @@ module github.com/hashicorp/go-changelog
 go 1.24.0
 
 require (
-	github.com/go-git/go-billy/v5 v5.6.1
 	github.com/go-git/go-billy/v6 v6.0.0-20251217170237-e9738f50a3cd
-	github.com/go-git/go-git/v5 v5.13.1
+	github.com/go-git/go-git/v5 v5.16.5
 	github.com/go-git/go-git/v6 v6.0.0-20251216093047-22c365fcee9c
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/manifoldco/promptui v0.8.0
@@ -22,6 +21,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/gcfg/v2 v2.0.2 // indirect
+	github.com/go-git/go-billy/v5 v5.6.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
@@ -34,7 +34,7 @@ require (
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/pjbgf/sha1cd v0.5.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
-	github.com/skeema/knownhosts v1.3.0 // indirect
+	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/net v0.48.0 // indirect
