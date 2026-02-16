@@ -16,7 +16,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v6"
 	"github.com/google/go-github/github"
 	"github.com/hashicorp/go-changelog"
 	"github.com/manifoldco/promptui"
