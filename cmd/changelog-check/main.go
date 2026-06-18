@@ -25,7 +25,6 @@ func main() {
 		r, err = os.Open(filepath)
 		if err != nil {
 			log.Fatalf("error opening %s", filepath)
-			os.Exit(1)
 		}
 	}
 
@@ -33,10 +32,8 @@ func main() {
 	if err != nil {
 		if filepath != "" {
 			log.Fatalf("error reading from %s", filepath)
-		} else {
-			log.Fatalf("error reading from stdin")
 		}
-		os.Exit(1)
+		log.Fatalf("error reading from stdin")
 	}
 
 	entry := changelog.Entry{
@@ -45,6 +42,5 @@ func main() {
 
 	if err := entry.Validate(); err != nil {
 		log.Fatalf("%s", err)
-		os.Exit(1)
 	}
 }
