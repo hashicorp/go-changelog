@@ -44,7 +44,7 @@ func main() {
 	}
 
 	if err := entry.Validate(); err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%s", err)
 		os.Exit(1)
 	}
 }
