@@ -160,9 +160,8 @@ func OpenGit(path string) (*git.Repository, error) {
 	if err != nil {
 		if path == "/" {
 			return r, err
-		} else {
-			return OpenGit(path[:strings.LastIndex(path, "/")])
 		}
+		return OpenGit(path[:strings.LastIndex(path, "/")])
 	}
 	return r, err
 }
